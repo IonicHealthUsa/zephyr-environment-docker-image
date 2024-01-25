@@ -2,11 +2,11 @@
 FROM ubuntu:22.04
 
 # Set the working directory to /home
-WORKDIR /root
+WORKDIR /zephyr-workdir
 
 # Set environment variables
 ENV ARM_TOOLCHAINS_URL=https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.4/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
-ENV ARM_TOOLCHAINS_TAR_FILENAME=toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
+ENV ARM_TOOLCHAINS_FILENAME=toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
 ENV ZEPHYR_SDK_URL_MINIMAL=https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.4/zephyr-sdk-0.16.4_linux-x86_64_minimal.tar.xz
 ENV ZEPHYR_SDK_TAR_FILENAME=zephyr-sdk-0.16.4_linux-x86_64_minimal.tar.xz
 ENV ZEPHYR_SDK_FOLDER=zephyr-sdk-0.16.4
@@ -31,16 +31,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dfu-util \
     python3-setuptools \
     python3-wheel \
-    python3-venv
+    python3-venv \
+    sudo
 
 # Download and install Zephyr SDK minimal
-RUN wget $ZEPHYR_SDK_URL_MINIMAL -O ./$ZEPHYR_SDK_TAR_FILENAME
+RUN wget $ZEPHYR_SDK_URL_MINIMAL -O /opt/$ZEPHYR_SDK_TAR_FILENAME
 
 # Download and install ARM toolchains
-RUN wget $ARM_TOOLCHAINS_URL -O ./$ARM_TOOLCHAINS_TAR_FILENAME
+RUN wget $ARM_TOOLCHAINS_URL -O /opt/$ARM_TOOLCHAINS_FILENAME
 
 # Install Zephyr SDK
-RUN tar xf ./$ZEPHYR_SDK_TAR_FILENAME && \
+RUN cd /opt/ && tar xf ./$ZEPHYR_SDK_TAR_FILENAME && \
     bash ./$ZEPHYR_SDK_FOLDER/setup.sh -h -c -t arm-zephyr-eabi
 
 # Create virtual environment
@@ -86,7 +87,15 @@ RUN apt-get remove -y --purge \
     xz-utils && \ 
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-	rm -f ./$ZEPHYR_SDK_TAR_FILENAME && \
-    rm -f ./$ARM_TOOLCHAINS_TAR_FILENAME
+    rm -f /opt/$ZEPHYR_SDK_TAR_FILENAME && \
+    rm -f /opt/$ARM_TOOLCHAINS_FILENAME
 
-CMD ["/bin/bash"]
+# Set access to workdir
+RUN chmod -R  777 /zephyr-workdir  
+
+# Setting a password to root
+RUN yes toor | passwd root
+
+# Setting the a default CMD
+CMD ["bash"]
+
