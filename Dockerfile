@@ -90,12 +90,6 @@ RUN apt-get remove -y --purge \
     rm -f /opt/$ZEPHYR_SDK_TAR_FILENAME && \
     rm -f /opt/$ARM_TOOLCHAINS_FILENAME
 
-# Set access to workdir
-RUN chmod -R  777 /zephyr-workdir  
-
-# Setting a password to root
-RUN yes toor | passwd root
-
 # Setting the a default CMD
 CMD ["bash"]
 
