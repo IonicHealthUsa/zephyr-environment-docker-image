@@ -1,4 +1,3 @@
-# Use the official Ubuntu 22.04 base image
 FROM ubuntu:22.04
 
 # Set the working directory to /home
@@ -32,53 +31,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-setuptools \
     python3-wheel \
     python3-venv \
-    sudo
+    sudo && \
+    # Download and install Zephyr SDK minimal
+    wget $ZEPHYR_SDK_URL_MINIMAL -O /opt/$ZEPHYR_SDK_TAR_FILENAME && \
 
-# Download and install Zephyr SDK minimal
-RUN wget $ZEPHYR_SDK_URL_MINIMAL -O /opt/$ZEPHYR_SDK_TAR_FILENAME
+    # Download and install ARM toolchains
+    wget $ARM_TOOLCHAINS_URL -O /opt/$ARM_TOOLCHAINS_FILENAME && \
 
-# Download and install ARM toolchains
-RUN wget $ARM_TOOLCHAINS_URL -O /opt/$ARM_TOOLCHAINS_FILENAME
+    # Install Zephyr SDK
+    cd /opt/ && tar xf ./$ZEPHYR_SDK_TAR_FILENAME && \
+    bash ./$ZEPHYR_SDK_FOLDER/setup.sh -h -c -t arm-zephyr-eabi && \
 
-# Install Zephyr SDK
-RUN cd /opt/ && tar xf ./$ZEPHYR_SDK_TAR_FILENAME && \
-    bash ./$ZEPHYR_SDK_FOLDER/setup.sh -h -c -t arm-zephyr-eabi
+    # Create virtual environment
+    python3 -m venv venv && \
+    # Upgrade pip
+    python3 -m pip install -U pip && \
 
-# Create virtual environment
-RUN python3 -m venv venv
+    # Install west
+    . venv/bin/activate && \
+    pip install west && \
 
-# Upgrade pip
-RUN python3 -m pip install -U pip
+    # Initialize west
+    west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.4.0 && \
 
-# Install west
-RUN . venv/bin/activate && \
-    pip install west
+    # Update west
+    west update && \
 
-# Initialize west
-RUN . venv/bin/activate && \
-    west init
+    # Export Zephyr SDK
+    west zephyr-export && \
 
-# Update west
-RUN . venv/bin/activate && \
-    west update
+    # Install Zephyr dependencies
+    pip install -r ./zephyr/scripts/requirements.txt && \
 
-# Export Zephyr SDK
-RUN . venv/bin/activate && \
-    west zephyr-export
+    # Clone mcuboot
+    git clone https://github.com/mcu-tools/mcuboot.git && \
+    (cd mcuboot/ && git checkout v1.10.0) && \
 
-# Install Zephyr dependencies
-RUN . venv/bin/activate && \
-    pip install -r ./zephyr/scripts/requirements.txt
+    # Install mcuboot dependencies
+    pip install -r ./mcuboot/scripts/requirements.txt && \
 
-# Clone mcuboot
-RUN git clone https://github.com/mcu-tools/mcuboot.git
-
-# Install mcuboot dependencies
-RUN . venv/bin/activate && \
-    pip install -r ./mcuboot/scripts/requirements.txt
-
-# Cleanup
-RUN apt-get remove -y --purge \
+    # Cleanup
+    apt-get remove -y --purge \
     python3-dev \
     python3-pip \
     python3-setuptools \
@@ -89,7 +82,4 @@ RUN apt-get remove -y --purge \
     rm -rf /var/lib/apt/lists/* && \
     rm -f /opt/$ZEPHYR_SDK_TAR_FILENAME && \
     rm -f /opt/$ARM_TOOLCHAINS_FILENAME
-
-# Setting the a default CMD
-CMD ["bash"]
 
