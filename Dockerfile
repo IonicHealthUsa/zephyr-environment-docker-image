@@ -31,42 +31,46 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-setuptools \
     python3-wheel \
     python3-venv \
-    sudo && \
-    # Download and install Zephyr SDK minimal
-    wget $ZEPHYR_SDK_URL_MINIMAL -O /opt/$ZEPHYR_SDK_TAR_FILENAME && \
+    sudo
 
-    # Download and install ARM toolchains
-    wget $ARM_TOOLCHAINS_URL -O /opt/$ARM_TOOLCHAINS_FILENAME && \
+# Download and install Zephyr SDK minimal
+RUN wget $ZEPHYR_SDK_URL_MINIMAL -O /opt/$ZEPHYR_SDK_TAR_FILENAME
 
-    # Install Zephyr SDK
-    cd /opt/ && tar xf ./$ZEPHYR_SDK_TAR_FILENAME && \
-    bash ./$ZEPHYR_SDK_FOLDER/setup.sh -h -c -t arm-zephyr-eabi && \
+# Download and install ARM toolchains
+RUN wget $ARM_TOOLCHAINS_URL -O /opt/$ARM_TOOLCHAINS_FILENAME
 
-    # Create virtual environment
-    python3 -m venv venv && \
+# Install Zephyr SDK
+RUN cd /opt/ && tar xf ./$ZEPHYR_SDK_TAR_FILENAME && \
+    bash ./$ZEPHYR_SDK_FOLDER/setup.sh -h -c -t arm-zephyr-eabi
+
+# Create virtual environment
+RUN python3 -m venv venv && \
     # Upgrade pip
-    python3 -m pip install -U pip && \
+    python3 -m pip install -U pip
 
-    # Install west
-    . venv/bin/activate && \
-    pip install west && \
+# Install west
+RUN . venv/bin/activate && \
+    pip install west
 
-    # Initialize west
-    west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.4.0 && \
+# Initialize west
+RUN . venv/bin/activate && \
+    west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.4.0
 
-    # Update west
+# Update west
+RUN . venv/bin/activate && \
     west update && \
-
     # Export Zephyr SDK
-    west zephyr-export && \
+    west zephyr-export
 
-    # Install Zephyr dependencies
-    pip install -r ./zephyr/scripts/requirements.txt && \
+# Install Zephyr dependencies
+RUN . venv/bin/activate && \
+    pip install -r ./zephyr/scripts/requirements.txt
 
-    # Clone mcuboot
-    git clone https://github.com/mcu-tools/mcuboot.git && \
+
+# Clone mcuboot
+RUN git clone https://github.com/mcu-tools/mcuboot.git && \
     (cd mcuboot/ && git checkout v1.10.0) && \
-
+    . venv/bin/activate && \
     # Install mcuboot dependencies
     pip install -r ./mcuboot/scripts/requirements.txt && \
 
