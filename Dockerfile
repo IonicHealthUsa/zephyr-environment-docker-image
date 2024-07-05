@@ -54,7 +54,7 @@ RUN . venv/bin/activate && \
 
 # Initialize west
 RUN . venv/bin/activate && \
-    west init -m https://github.com/zephyrproject-rtos/zephyr --mr v3.4.0
+    west init -m https://github.com/IonicHealthUsa/zephyr --mr v3.4.0-custom-kernel
 
 # Update west
 RUN . venv/bin/activate && \
